@@ -3,6 +3,10 @@
 from classifynumbers import sum_dividers
 import unittest
 
+##################################
+# Tests for sum_dividers funct   #
+##################################
+
 class TestSumDividers(unittest.TestCase):
 
     def test_zero(self):

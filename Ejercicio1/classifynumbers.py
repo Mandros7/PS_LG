@@ -12,6 +12,8 @@ from math import floor,sqrt
 #                                                                                   #
 #####################################################################################
 
+'''classify_numbers(number <int|long>)'''
+
 def sum_dividers(number):
     if not(isinstance(number,(int,long))):
         return None
@@ -26,3 +28,45 @@ def sum_dividers(number):
                 sum = sum + number/div
     return sum
 
+#####################################################################################
+#   ClasisifyNumbers function                                                       #
+#                                                                                   #
+# - Receives a list of numbers and prints if they are perfect, defective or abundant#
+# - Cache parameters stores the result of calling sum_dividers for efficiency       #
+# purposes (on the processing side)                                                 #
+#####################################################################################
+
+'''classify_numbers(numberList <list>, cacheEnabled <bool>)'''
+
+def classify_numbers(numberList,memory=False):
+    #Protect input
+    if not(isinstance(numberList,list)):
+        print "Unexpected input type. Expected list of integers"
+        return
+    #Memory storage
+    storedResults = {}
+    for number in numberList:
+        #Excepcionally accept strings that represent integers
+        if isinstance(number,str):
+            try: 
+                number = int(number)
+            except ValueError:
+                pass
+        if memory and number in storedResults:
+            print "%d\t\t %s"%(number,storedResults[number])
+        else:
+            sumDiv = sum_dividers(number)
+            resultStr = ""
+            if sumDiv is None:
+                print "%s\t\t None"%(number)
+                continue
+            if sumDiv > number:
+                resultStr = "Abundant \t\t(%d > %d)"%(sumDiv,number)
+            elif sumDiv < number:
+                resultStr = "Defective \t\t(%d < %d)"%(sumDiv,number)
+            else:
+                resultStr = "Perfect \t\t(%d = %d)"%(sumDiv,number)
+            print "%s\t\t %s"%(number,resultStr)
+            #Save value for future use
+            if memory:
+                storedResults[number] = resultStr
