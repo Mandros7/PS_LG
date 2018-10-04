@@ -1,4 +1,3 @@
-var t;
 var loadJSON = function(url) {
     return new Promise(function(resolve, reject) {
       var xhr = new XMLHttpRequest();
@@ -32,11 +31,7 @@ function initAnimation () {
     frame.style.opacity = 1;
 }
 
-function showData (data) {
-    //This function unsets the loading animation
-    //and populates graphs
-    
-    
+function printLineChart(data) {
     var svg = d3.select("svg"),
     margin = {top: 20, right: 80, bottom: 30, left: 50},
     width = svg.attr("width") - margin.left - margin.right,
@@ -74,8 +69,8 @@ function showData (data) {
     z.domain(categories.map(function(c) { return c.cat; }));
 
     g.append("g")
-      .attr("class", "axis axis--x")
-      .attr("transform", "translate(0," + height + ")")
+      .attr("class", "axis axis--y")
+      .attr("transform", "translate(0," + height+ ")")
       .call(d3.axisBottom(x));
 
     g.append("g")
@@ -86,7 +81,7 @@ function showData (data) {
       .attr("y", 6)
       .attr("dy", "0.71em")
       .attr("fill", "#000")
-      .text("Temperature, ºF");
+      .text("Value");
 
     var cat = g.selectAll(".cat")
       .data(categories)
@@ -97,12 +92,87 @@ function showData (data) {
       .attr("class", "line")
       .attr("d", function(d) { return line(d.values); })
       .style("stroke", function(d) { return z(d.cat); });
+    
+    cat.append("text")
+      .datum(function(d) { return {name: d.cat, value: d.values[d.values.length - 1]}; })
+      .attr("transform", function(d) { return "translate(" + x(d.value.date) + "," + y(d.value.amount) + ")"; })
+      .attr("x", 3)
+      .attr("dy", ".35em")
+      .text(function(d) { return d.name; })
+      .style("font-size","70%");
+}
 
-      
+function printPieChart(parentClass,width,height,data,total,factor) {
+
+    console.log(data);
+    var z = d3.scaleOrdinal(d3.schemeCategory10);
+    z.domain(data.map(function(c) { return c.cat; }));
+   
+    radius = width / 2.2;
+
+    var arc = d3.arc()
+        .outerRadius(radius - 10)
+        .innerRadius(radius - radius/factor);
+
+    var pie = d3.pie()
+        .sort(null)
+        .value(function(d) {
+            return d.sum;
+        });
+
+    var svg = d3.select('.'+parentClass).append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+    var g = svg.selectAll(".arc")
+        .data(pie(data))
+        .enter().append("g");    
+
+   	g.append("path")
+        .attr("d", arc)
+        .style("fill", function(d,i) {
+            return z(d.data.cat);
+        });
+
+    g.append("text")
+        .attr("transform", function(d) {
+            var _d = arc.centroid(d);
+            _d[0] *= 1.4 / factor ;	//multiply by a constant factor
+            _d[1] *= 1.4 / factor;	//multiply by a constant factor
+            return "translate(" + _d + ")";
+        })
+        .attr("dy", ".50em")
+        .style("text-anchor", "middle")
+        .text(function(d) {
+            if( d.data.sum / total * 100 < 8) {
+              return '';
+            }
+            return parseFloat(d.data.sum / total * 100).toFixed(2) + '%';
+        });
+   
+}
+
+function showData (data) {
+    //This function unsets the loading animation
+    //and populates graphs
+    printLineChart(data);
+    
+    catSum = data.map((elem, i, data) => {
+        return {
+            "cat": elem.cat,
+            "sum": elem.values.reduce((a,b) => a + b.amount,0)
+        }
+    });    
+    var total = catSum.reduce((a,b) => a + b.sum, 0);       
+    printPieChart("exercise2",400,400,catSum,total,1);
+
+    printPieChart("dyk",300,300,catSum,total,1);
+    printPieChart("dyk",300,300,catSum,total,2.5);
+        
     var frame = document.getElementById("loading");
     frame.style.opacity = 0;
-    t = categories;
-    console.log(categories);
 }
 
 function parseData(json) {

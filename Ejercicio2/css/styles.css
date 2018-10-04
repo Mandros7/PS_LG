@@ -11,10 +11,39 @@
     animation: spin 2s linear infinite;
 }
 
-.main {
-    width: 100px;
-    height: 100px;
-    position: relative;
+#main {
+
+}
+
+.header {
+    text-align:center;
+    display: table;
+    margin: 3 auto;
+    padding: 5px;
+    width: 50%;
+    height: 20px;
+}
+
+.exercise2 {
+    text-align:center;
+    display: table;
+    margin: 10 auto;
+    border-radius: 15px;
+    background: #DDDDDD;
+    padding: 20px;
+    width: 50%;
+    height: 150px;
+}
+
+.dyk {
+    text-align:center;
+    display: table;
+    margin: 40 auto;
+    border-radius: 15px;
+    background: #DDDDDD;
+    padding: 20px;
+    width: 50%;
+    height: 150px;
 }
 
 .loadingFrame {
@@ -26,7 +55,7 @@
     right: 0;
     bottom: 0;
     background-color: rgba(0,0,0,0.8);
-    z-index: -1;
+    z-index: 10;
     opacity: 0;
     transition: opacity 1s linear; 
     pointer-events: none;
