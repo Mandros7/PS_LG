@@ -1,3 +1,5 @@
+
+// Load JSON function. Requests a file through an AJAX method.
 var loadJSON = function(url) {
     return new Promise(function(resolve, reject) {
       var xhr = new XMLHttpRequest();
@@ -17,7 +19,8 @@ var loadJSON = function(url) {
       xhr.send();
     });
   }
-  
+
+//Function to group by elements of an array
 var groupBy = function(arr, key) {
   return arr.reduce(function(field, x) {
     (field[x[key]] = field[x[key]] || []).push(x);
@@ -25,12 +28,13 @@ var groupBy = function(arr, key) {
   }, {});
 };
 
+//This function sets a loading animation
 function initAnimation () {
-    //This function sets a loading animation
     var frame = document.getElementById("loading");
     frame.style.opacity = 1;
 }
 
+//Prints a line chart with data sorted by category
 function printLineChart(data) {
     var svg = d3.select("svg"),
     margin = {top: 20, right: 80, bottom: 30, left: 50},
@@ -42,12 +46,13 @@ function printLineChart(data) {
         y = d3.scaleLinear().range([height, 0]),
         z = d3.scaleOrdinal(d3.schemeCategory10);
 
+    //Line printing function
     var line = d3.line()
         .curve(d3.curveBasis)
         .x(function(d) { return x(d.date); })
         .y(function(d) { return y(d.amount); });
 
-    
+    //Sort element by date (to facilitate printing)
     categories = data.map((elem, i, data) => {
         return {
             "cat": elem.cat,
@@ -57,6 +62,7 @@ function printLineChart(data) {
         }
     });
 
+    //Set limits of the axis
     x.domain([
         d3.min(categories, function(c) { return d3.min(c.values, function(d) { return d.date; }); }),
         d3.max(categories, function(c) { return d3.max(c.values, function(d) { return d.date; }); })
@@ -66,8 +72,10 @@ function printLineChart(data) {
         d3.max(categories, function(c) { return d3.max(c.values, function(d) { return d.amount; }); })
     ]);
 
+    //Define color palette
     z.domain(categories.map(function(c) { return c.cat; }));
 
+    //Define axis
     g.append("g")
       .attr("class", "axis axis--y")
       .attr("transform", "translate(0," + height+ ")")
@@ -83,16 +91,19 @@ function printLineChart(data) {
       .attr("fill", "#000")
       .text("Value");
 
+    //Load data into d3 objects
     var cat = g.selectAll(".cat")
       .data(categories)
       .enter().append("g")
       .attr("class", "cat");
 
+    //Draw line
     cat.append("path")
       .attr("class", "line")
       .attr("d", function(d) { return line(d.values); })
       .style("stroke", function(d) { return z(d.cat); });
     
+    //Append category name to end of line.
     cat.append("text")
       .datum(function(d) { return {name: d.cat, value: d.values[d.values.length - 1]}; })
       .attr("transform", function(d) { return "translate(" + x(d.value.date) + "," + y(d.value.amount) + ")"; })
@@ -102,18 +113,72 @@ function printLineChart(data) {
       .style("font-size","70%");
 }
 
+//Prints a legend
+function printLegend(parentClass, data,width,height) {
+    var svgLegend = d3.select("."+parentClass).append("svg")
+            .attr("width", width)
+            .attr("height", height - 50)
+        
+    var dataL = 0;
+    var offset = 80;
+    
+    legendVals = data.map(function(c) { return c.cat; })
+    
+    var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    var legend = svgLegend.selectAll('.legends')
+        .data(legendVals)
+        .enter().append('g')
+        .attr("class", "legends")
+        .attr("transform", function (d, i) {
+         if (i === 0) {
+            dataL = d.length + offset 
+            return "translate(0,0)"
+        } else { 
+         var newdataL = dataL
+         dataL +=  d.length + offset
+         return "translate(" + (newdataL) + ",0)"
+        }
+    })
+    
+    legend.append('rect')
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", 10)
+        .attr("height", 10)
+        .style("fill", function (d, i) {
+        return color(i)
+    })
+    
+    legend.append('text')
+        .attr("x", 20)
+        .attr("y", 10)
+    //.attr("dy", ".35em")
+    .text(function (d, i) {
+        return d
+    })
+        .attr("class", "textselected")
+        .style("text-anchor", "start")
+        .style("font-size", 15)
+}
+
+
+//Prints a donut chart (pie chart if factor = 1)
 function printPieChart(parentClass,width,height,data,total,factor) {
 
-    console.log(data);
+    //Define color palette
     var z = d3.scaleOrdinal(d3.schemeCategory10);
     z.domain(data.map(function(c) { return c.cat; }));
    
+    //Defne overall size
     radius = width / 2.2;
 
+    //Define size of inner and outter (pie vs donut)
     var arc = d3.arc()
         .outerRadius(radius - 10)
         .innerRadius(radius - radius/factor);
 
+    //Pie function for printing speicifc arcs
     var pie = d3.pie()
         .sort(null)
         .value(function(d) {
@@ -136,6 +201,7 @@ function printPieChart(parentClass,width,height,data,total,factor) {
             return z(d.data.cat);
         });
 
+    //Show percentage close to each section
     g.append("text")
         .attr("transform", function(d) {
             var _d = arc.centroid(d);
@@ -154,17 +220,20 @@ function printPieChart(parentClass,width,height,data,total,factor) {
    
 }
 
+//This function unsets the loading animation
+//and populates graphs
 function showData (data) {
-    //This function unsets the loading animation
-    //and populates graphs
     printLineChart(data);
+    printLegend("exercise2",data,400,100);
     
+    //Prepare data for pie charts
     catSum = data.map((elem, i, data) => {
         return {
             "cat": elem.cat,
             "sum": elem.values.reduce((a,b) => a + b.amount,0)
         }
-    });    
+    });   
+    
     var total = catSum.reduce((a,b) => a + b.sum, 0);       
     printPieChart("exercise2",400,400,catSum,total,1);
 
@@ -175,11 +244,11 @@ function showData (data) {
     frame.style.opacity = 0;
 }
 
+//This function normalizes the datasets
 function parseData(json) {
-    //This function normalizes the datasets
-    // Adapt the first dataset
     collapsedArr = json.flat();
     var regex = /\d{4}\-\d{2}\-\d{2}/;
+    //FORMAT
     var parsedArr = collapsedArr.map((elem, i, collapsedArr) => {
         if ("d" in elem) {
             return {
@@ -210,6 +279,8 @@ function parseData(json) {
             }            
         }
     });
+    
+    //AGGREATION OF DUPLICATES (PER CATEGORY)
     accArr = Object.values(parsedArr.reduce(function(r, e) {
       var key = e.values.date + '|' + e.cat;
       if (!r[key]) r[key] = e;
@@ -219,6 +290,7 @@ function parseData(json) {
       return r;
     }, {}));
     
+    //FORMAT (FOR d3 VIS)
     return Object.values(accArr.reduce(function(r, e) {
       var key = e.cat;
       if (!r[key]) r[key] = {"cat": e.cat, "values":[e.values]};
@@ -229,6 +301,7 @@ function parseData(json) {
     }, {}));
 }
 
+// This function loads data and calls the print functions
 function retrieveData() {
     Promise.all([
         loadJSON("http://s3.amazonaws.com/logtrust-static/test/test/data1.json"),
@@ -238,7 +311,7 @@ function retrieveData() {
         showData(parseData(jsonData));
     }); 
 }
-
+// Main function
 function initialize() {
     initAnimation();
     retrieveData();
